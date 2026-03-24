@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -9,8 +9,21 @@
 <body>
   <div class="container">
     <div class="hero">
-      <h1>仓库文件索引</h1>
-      <p class="desc">自动读取当前 GitHub 仓库中的文件，并按类型分组展示。</p>
+      <div class="hero-top">
+        <div>
+          <h1>仓库文件索引</h1>
+          <p class="desc">自动读取当前 GitHub 仓库中的文件，并按类型分组展示。</p>
+        </div>
+
+        <div class="theme-panel">
+          <label for="themeSelect" class="theme-label">主题</label>
+          <select id="themeSelect" class="theme-select">
+            <option value="auto">自动</option>
+            <option value="light">浅色</option>
+            <option value="dark">深色</option>
+          </select>
+        </div>
+      </div>
     </div>
 
     <div class="card">
