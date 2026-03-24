@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>仓库文件索引</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="hero">
+      <h1>仓库文件索引</h1>
+      <p class="desc">自动读取当前 GitHub 仓库中的文件，并按类型分组展示。</p>
+    </div>
+
+    <div class="card">
+      <div class="toolbar">
+        <input id="searchInput" type="text" placeholder="搜索文件名、路径、扩展名..." />
+        <select id="sortSelect">
+          <option value="name-asc">按名字排序（A → Z）</option>
+          <option value="time-desc">按时间排序（新 → 旧）</option>
+          <option value="time-asc">按时间排序（旧 → 新）</option>
+        </select>
+        <select id="typeFilter">
+          <option value="all">全部类型</option>
+          <option value="html">HTML</option>
+          <option value="pdf">PDF</option>
+          <option value="image">图片</option>
+          <option value="text">文本/Markdown/JSON</option>
+          <option value="code">代码/脚本</option>
+          <option value="archive">压缩包</option>
+          <option value="other">其他</option>
+        </select>
+        <button id="refreshBtn" type="button">刷新缓存</button>
+      </div>
+
+      <div class="statusbar">
+        <div>仓库：<strong id="repoInfo">加载中...</strong></div>
+        <div>分支：<strong id="branchInfo">-</strong></div>
+        <div>文件数：<strong id="countInfo">0</strong></div>
+        <div>缓存：<strong id="cacheInfo">未命中</strong></div>
+        <div>更新时间：<strong id="updateInfo">-</strong></div>
+      </div>
+
+      <div id="contentArea">
+        <div id="status" class="empty">正在读取仓库文件…</div>
+      </div>
+
+      <div class="footer-tip">
+        提示：先快速显示文件列表，再异步补全最近更新时间。
+      </div>
+    </div>
+  </div>
+
+  <script src="./script.js"></script>
+</body>
+</html>
