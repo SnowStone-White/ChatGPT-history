@@ -4,6 +4,7 @@ const fallbackBranch = "main";
 
 const CACHE_KEY = `repo-index-cache::${owner}/${repo}`;
 const CACHE_TTL = 10 * 60 * 1000;
+const THEME_KEY = "repo-index-theme-mode";
 
 const repoInfoEl = document.getElementById("repoInfo");
 const branchInfoEl = document.getElementById("branchInfo");
@@ -16,6 +17,7 @@ const searchInputEl = document.getElementById("searchInput");
 const sortSelectEl = document.getElementById("sortSelect");
 const typeFilterEl = document.getElementById("typeFilter");
 const refreshBtnEl = document.getElementById("refreshBtn");
+const themeSelectEl = document.getElementById("themeSelect");
 
 let repoMeta = { branch: fallbackBranch };
 let allFiles = [];
@@ -102,6 +104,37 @@ function fileId(path) {
     .replace(/=+/g, "")
     .replace(/\+/g, "_")
     .replace(/\//g, "-");
+}
+
+function getAutoThemeByTime() {
+  const hour = new Date().getHours();
+  return (hour >= 19 || hour < 7) ? "dark" : "light";
+}
+
+function applyTheme(mode) {
+  const actualTheme = mode === "auto" ? getAutoThemeByTime() : mode;
+  document.documentElement.setAttribute("data-theme", actualTheme);
+}
+
+function initTheme() {
+  const savedMode = localStorage.getItem(THEME_KEY) || "auto";
+  themeSelectEl.value = savedMode;
+  applyTheme(savedMode);
+}
+
+function bindThemeEvents() {
+  themeSelectEl.addEventListener("change", () => {
+    const mode = themeSelectEl.value;
+    localStorage.setItem(THEME_KEY, mode);
+    applyTheme(mode);
+  });
+
+  setInterval(() => {
+    const currentMode = localStorage.getItem(THEME_KEY) || "auto";
+    if (currentMode === "auto") {
+      applyTheme("auto");
+    }
+  }, 60 * 1000);
 }
 
 function loadCache() {
@@ -393,4 +426,6 @@ refreshBtnEl.addEventListener("click", async () => {
   await loadData(true);
 });
 
+initTheme();
+bindThemeEvents();
 loadData();
