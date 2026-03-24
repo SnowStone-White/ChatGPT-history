@@ -19,12 +19,20 @@ const typeFilterEl = document.getElementById("typeFilter");
 const refreshBtnEl = document.getElementById("refreshBtn");
 const themeSelectEl = document.getElementById("themeSelect");
 
+const checkRateBtnEl = document.getElementById("checkRateBtn");
+const rateStatusEl = document.getElementById("rateStatus");
+const rateLimitEl = document.getElementById("rateLimit");
+const rateRemainingEl = document.getElementById("rateRemaining");
+const rateUsedEl = document.getElementById("rateUsed");
+const rateResetEl = document.getElementById("rateReset");
+const rateHintEl = document.getElementById("rateHint");
+
 let repoMeta = { branch: fallbackBranch };
 let allFiles = [];
 let timeFillVersion = 0;
 
 function escapeHtml(str) {
-  return String(str).replace(/[&<>"']/g, s => ({
+  return String(str).replace(/[&<>"']/g, (s) => ({
     "&": "&amp;",
     "<": "&lt;",
     ">": "&gt;",
@@ -48,6 +56,13 @@ function formatDate(dateStr) {
   return d.toLocaleString("zh-CN", { hour12: false });
 }
 
+function formatUnixTime(seconds) {
+  if (!seconds) return "-";
+  const d = new Date(seconds * 1000);
+  if (Number.isNaN(d.getTime())) return "-";
+  return d.toLocaleString("zh-CN", { hour12: false });
+}
+
 function getExtension(path) {
   const name = path.split("/").pop() || "";
   const idx = name.lastIndexOf(".");
@@ -56,6 +71,7 @@ function getExtension(path) {
 
 function getFileType(path) {
   const ext = getExtension(path);
+
   if (["html", "htm"].includes(ext)) return "html";
   if (["pdf"].includes(ext)) return "pdf";
   if (["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp", "ico", "avif"].includes(ext)) return "image";
@@ -165,13 +181,76 @@ function clearCache() {
   } catch {}
 }
 
+function setRateStatus(text, className = "") {
+  rateStatusEl.textContent = text;
+  rateStatusEl.className = "";
+  if (className) {
+    rateStatusEl.classList.add(className);
+  }
+}
+
+async function checkRateLimit() {
+  try {
+    setRateStatus("检测中...");
+    rateLimitEl.textContent = "-";
+    rateRemainingEl.textContent = "-";
+    rateUsedEl.textContent = "-";
+    rateResetEl.textContent = "-";
+    rateHintEl.textContent = "-";
+
+    const res = await fetch("https://api.github.com/rate_limit", {
+      headers: { "Accept": "application/vnd.github+json" }
+    });
+
+    if (!res.ok) {
+      setRateStatus(`检测失败 (${res.status})`, "rate-danger");
+      rateHintEl.textContent = "无法读取限流信息";
+      return;
+    }
+
+    const data = await res.json();
+    const core = data?.resources?.core || data?.rate || {};
+
+    const limit = core.limit ?? "-";
+    const remaining = core.remaining ?? "-";
+    const used = core.used ?? "-";
+    const reset = core.reset ?? null;
+
+    rateLimitEl.textContent = String(limit);
+    rateRemainingEl.textContent = String(remaining);
+    rateUsedEl.textContent = String(used);
+    rateResetEl.textContent = formatUnixTime(reset);
+
+    if (typeof remaining === "number" && typeof limit === "number") {
+      const ratio = limit > 0 ? remaining / limit : 0;
+
+      if (remaining <= 0) {
+        setRateStatus("已限流", "rate-danger");
+        rateHintEl.textContent = "remaining 为 0，基本可以确定当前请求被限流";
+      } else if (ratio <= 0.2 || remaining <= 10) {
+        setRateStatus("接近限流", "rate-warn");
+        rateHintEl.textContent = "剩余额度较低，继续频繁刷新可能触发 403";
+      } else {
+        setRateStatus("正常", "rate-ok");
+        rateHintEl.textContent = "当前 REST API 配额仍可用";
+      }
+    } else {
+      setRateStatus("未知", "rate-warn");
+      rateHintEl.textContent = "返回结构异常，无法准确判断";
+    }
+  } catch (err) {
+    setRateStatus("检测失败", "rate-danger");
+    rateHintEl.textContent = err?.message || "请求失败";
+  }
+}
+
 async function fetchRepoInfo() {
   const url = `https://api.github.com/repos/${owner}/${repo}`;
   const res = await fetch(url, {
     headers: { "Accept": "application/vnd.github+json" }
   });
   if (!res.ok) {
-    throw new Error(`读取仓库信息失败：${res.status} ${res.statusText}`);
+    throw new Error(`读取仓库信息失败：${res.status}`);
   }
   return await res.json();
 }
@@ -182,7 +261,7 @@ async function fetchTree(currentBranch) {
     headers: { "Accept": "application/vnd.github+json" }
   });
   if (!res.ok) {
-    throw new Error(`读取文件树失败：${res.status} ${res.statusText}`);
+    throw new Error(`读取文件树失败：${res.status}`);
   }
   const data = await res.json();
   if (!data.tree || !Array.isArray(data.tree)) {
@@ -204,9 +283,9 @@ async function fetchCommitTimeForPath(path) {
 
 function normalizeFiles(treeItems) {
   return treeItems
-    .filter(item => item.type === "blob")
-    .filter(item => item.path !== "index.html")
-    .map(item => ({
+    .filter((item) => item.type === "blob")
+    .filter((item) => !["index.html", "style.css", "script.js"].includes(item.path))
+    .map((item) => ({
       path: item.path,
       name: item.path.split("/").pop() || item.path,
       size: item.size || 0,
@@ -220,7 +299,7 @@ function filterFiles(files) {
   const keyword = searchInputEl.value.trim().toLowerCase();
   const type = typeFilterEl.value;
 
-  return files.filter(file => {
+  return files.filter((file) => {
     const matchedKeyword = !keyword || [
       file.path,
       file.name,
@@ -290,7 +369,7 @@ function render(files) {
           <div class="group-count">${items.length} 个文件</div>
         </div>
         <ul class="file-list">
-          ${items.map(file => `
+          ${items.map((file) => `
             <li class="file-item" id="${fileId(file.path)}">
               <div class="file-icon">${getIcon(file.path)}</div>
               <div class="file-main">
@@ -301,7 +380,7 @@ function render(files) {
               </div>
               <div class="file-meta">
                 <div class="meta-line">${formatBytes(file.size)}</div>
-                <div class="meta-line file-time">${formatDate(file.lastModified)}</div>
+                <div class="meta-line file-time">${file.lastModified ? formatDate(file.lastModified) : "加载中…"}</div>
               </div>
             </li>
           `).join("")}
@@ -322,16 +401,23 @@ function updateFileTimeInDom(path, time) {
   }
 }
 
+function getVisibleFiles(files) {
+  const filtered = filterFiles(files);
+  const sorted = sortFiles(filtered);
+  return sorted.slice(0, 20);
+}
+
 async function fillTimesAsync(files, version) {
-  const concurrency = 4;
+  const visibleFiles = getVisibleFiles(files);
+  const concurrency = 2;
   let index = 0;
   let updated = false;
 
   async function worker() {
-    while (index < files.length) {
+    while (index < visibleFiles.length) {
       if (version !== timeFillVersion) return;
 
-      const current = files[index++];
+      const current = visibleFiles[index++];
       if (current.lastModified) {
         updateFileTimeInDom(current.path, current.lastModified);
         continue;
@@ -347,7 +433,7 @@ async function fillTimesAsync(files, version) {
     }
   }
 
-  const workers = Array.from({ length: Math.min(concurrency, files.length) }, worker);
+  const workers = Array.from({ length: Math.min(concurrency, visibleFiles.length) }, worker);
   await Promise.all(workers);
 
   if (version === timeFillVersion && updated) {
@@ -361,6 +447,7 @@ async function fillTimesAsync(files, version) {
     }
 
     updateInfoEl.textContent = new Date().toLocaleString("zh-CN", { hour12: false });
+    checkRateLimit();
   }
 }
 
@@ -398,12 +485,13 @@ async function loadData(forceRefresh = false) {
 
     render(allFiles);
     cacheInfoEl.textContent = forceRefresh ? "已刷新" : "新列表";
-    fillTimesAsync(allFiles, currentVersion);
 
     saveCache({
       branch: repoMeta.branch,
       files: allFiles
     });
+
+    fillTimesAsync(allFiles, currentVersion);
   } catch (err) {
     contentAreaEl.innerHTML = `
       <div class="error">加载失败：${escapeHtml(err.message)}
@@ -414,18 +502,38 @@ async function loadData(forceRefresh = false) {
 3. GitHub Pages 是否已开启
 4. GitHub API 是否暂时限流</div>
     `;
+    checkRateLimit();
   }
 }
 
-searchInputEl.addEventListener("input", () => render(allFiles));
-typeFilterEl.addEventListener("change", () => render(allFiles));
-sortSelectEl.addEventListener("change", () => render(allFiles));
+searchInputEl.addEventListener("input", () => {
+  render(allFiles);
+  timeFillVersion++;
+  fillTimesAsync(allFiles, timeFillVersion);
+});
+
+typeFilterEl.addEventListener("change", () => {
+  render(allFiles);
+  timeFillVersion++;
+  fillTimesAsync(allFiles, timeFillVersion);
+});
+
+sortSelectEl.addEventListener("change", () => {
+  render(allFiles);
+  timeFillVersion++;
+  fillTimesAsync(allFiles, timeFillVersion);
+});
 
 refreshBtnEl.addEventListener("click", async () => {
   clearCache();
   await loadData(true);
 });
 
+checkRateBtnEl.addEventListener("click", async () => {
+  await checkRateLimit();
+});
+
 initTheme();
 bindThemeEvents();
+checkRateLimit();
 loadData();

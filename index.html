@@ -55,6 +55,41 @@
         <div>更新时间：<strong id="updateInfo">-</strong></div>
       </div>
 
+      <div class="rate-card">
+        <div class="rate-card-header">
+          <h2>GitHub API 限流状态</h2>
+          <a href="https://api.github.com/rate_limit" target="_blank" rel="noopener noreferrer"> 测试链接：https://api.github.com/rate_limit</a>
+          <button id="checkRateBtn" type="button" class="mini-btn">重新检测</button>
+        </div>
+
+        <div id="rateLimitBox" class="rate-grid">
+          <div class="rate-item">
+            <span class="rate-label">状态</span>
+            <strong id="rateStatus">检测中...</strong>
+          </div>
+          <div class="rate-item">
+            <span class="rate-label">总额度</span>
+            <strong id="rateLimit">-</strong>
+          </div>
+          <div class="rate-item">
+            <span class="rate-label">剩余额度</span>
+            <strong id="rateRemaining">-</strong>
+          </div>
+          <div class="rate-item">
+            <span class="rate-label">已使用</span>
+            <strong id="rateUsed">-</strong>
+          </div>
+          <div class="rate-item">
+            <span class="rate-label">重置时间</span>
+            <strong id="rateReset">-</strong>
+          </div>
+          <div class="rate-item">
+            <span class="rate-label">说明</span>
+            <strong id="rateHint">-</strong>
+          </div>
+        </div>
+      </div>
+
       <div id="contentArea">
         <div id="status" class="empty">正在读取仓库文件…</div>
       </div>
