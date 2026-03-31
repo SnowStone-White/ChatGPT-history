@@ -1,40 +1,47 @@
 {
-  "owner": "SnowStone-White",
-  "repo": "ChatGPT-history",
-  "branch": "main",
-  "generatedAt": "2026-03-31T02:20:13Z",
+  "generatedAt": "2026-03-31T03:09:25.354Z",
   "files": [
     {
-      "path": ".github/workflows/update-manifest.yml",
-      "name": "update-manifest.yml",
-      "size": 1041,
-      "type": "text",
-      "lastModified": "2026-03-31T02:20:13Z",
-      "sha": "f4a82cc44c54c4ef42f367f25995090d4b7b7f68"
-    },
-    {
-      "path": "index.manifest.html",
-      "name": "index.manifest.html",
-      "size": 3982,
+      "path": "✅ 限定模型检测学习 - 分支 · 限界模型检测创新点-_[gpt-5-4-thinking].html",
+      "name": "✅ 限定模型检测学习 - 分支 · 限界模型检测创新点-_[gpt-5-4-thinking].html",
+      "size": 544369,
       "type": "html",
-      "lastModified": "2026-03-31T02:20:13Z",
-      "sha": "d775028939c18eea8ef745df2990f71e9b2ac7f9"
+      "lastModified": "2026-03-31T11:09:16+08:00"
     },
     {
-      "path": "script.old.js",
-      "name": "script.old.js",
-      "size": 16628,
-      "type": "code",
-      "lastModified": "2026-03-31T02:20:13Z",
-      "sha": "8f3c947b4a1cb8fc4aad6744be663c467cdfd97c"
+      "path": "限定模型检测学习 - 论文讲解 PPTL BMC (1).html",
+      "name": "限定模型检测学习 - 论文讲解 PPTL BMC (1).html",
+      "size": 1818177,
+      "type": "html",
+      "lastModified": "2026-03-31T11:09:16+08:00"
+    },
+    {
+      "path": "限定模型检测学习 - 论文讲解 PPTL BMC.html",
+      "name": "限定模型检测学习 - 论文讲解 PPTL BMC.html",
+      "size": 1622155,
+      "type": "html",
+      "lastModified": "2026-03-31T11:09:16+08:00"
+    },
+    {
+      "path": "ChatGPT-论文讲解_PPTL_BMC.md",
+      "name": "ChatGPT-论文讲解_PPTL_BMC.md",
+      "size": 436305,
+      "type": "text",
+      "lastModified": "2026-03-31T11:09:16+08:00"
+    },
+    {
+      "path": "LICENSE",
+      "name": "LICENSE",
+      "size": 1072,
+      "type": "other",
+      "lastModified": "2026-03-31T11:09:16+08:00"
     },
     {
       "path": "tools/generate-manifest.mjs",
       "name": "generate-manifest.mjs",
-      "size": 3017,
+      "size": 2969,
       "type": "code",
-      "lastModified": "2026-03-31T02:20:13Z",
-      "sha": "a9ea9104678d230c9696c429e4dad1cee74a3c1d"
+      "lastModified": "2026-03-31T11:09:16+08:00"
     }
   ]
 }
