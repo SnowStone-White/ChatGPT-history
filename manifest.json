@@ -1,0 +1,40 @@
+{
+  "owner": "SnowStone-White",
+  "repo": "ChatGPT-history",
+  "branch": "main",
+  "generatedAt": "2026-03-31T02:20:13Z",
+  "files": [
+    {
+      "path": ".github/workflows/update-manifest.yml",
+      "name": "update-manifest.yml",
+      "size": 1041,
+      "type": "text",
+      "lastModified": "2026-03-31T02:20:13Z",
+      "sha": "f4a82cc44c54c4ef42f367f25995090d4b7b7f68"
+    },
+    {
+      "path": "index.manifest.html",
+      "name": "index.manifest.html",
+      "size": 3982,
+      "type": "html",
+      "lastModified": "2026-03-31T02:20:13Z",
+      "sha": "d775028939c18eea8ef745df2990f71e9b2ac7f9"
+    },
+    {
+      "path": "script.old.js",
+      "name": "script.old.js",
+      "size": 16628,
+      "type": "code",
+      "lastModified": "2026-03-31T02:20:13Z",
+      "sha": "8f3c947b4a1cb8fc4aad6744be663c467cdfd97c"
+    },
+    {
+      "path": "tools/generate-manifest.mjs",
+      "name": "generate-manifest.mjs",
+      "size": 3017,
+      "type": "code",
+      "lastModified": "2026-03-31T02:20:13Z",
+      "sha": "a9ea9104678d230c9696c429e4dad1cee74a3c1d"
+    }
+  ]
+}
