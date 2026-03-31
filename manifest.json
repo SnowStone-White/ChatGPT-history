@@ -1,47 +1,47 @@
 {
-  "generatedAt": "2026-03-31T03:09:25.354Z",
+  "generatedAt": "2026-03-31T03:10:10.115Z",
   "files": [
     {
       "path": "✅ 限定模型检测学习 - 分支 · 限界模型检测创新点-_[gpt-5-4-thinking].html",
       "name": "✅ 限定模型检测学习 - 分支 · 限界模型检测创新点-_[gpt-5-4-thinking].html",
       "size": 544369,
       "type": "html",
-      "lastModified": "2026-03-31T11:09:16+08:00"
+      "lastModified": "2026-03-31T03:09:25Z"
     },
     {
       "path": "限定模型检测学习 - 论文讲解 PPTL BMC (1).html",
       "name": "限定模型检测学习 - 论文讲解 PPTL BMC (1).html",
       "size": 1818177,
       "type": "html",
-      "lastModified": "2026-03-31T11:09:16+08:00"
+      "lastModified": "2026-03-31T03:09:25Z"
     },
     {
       "path": "限定模型检测学习 - 论文讲解 PPTL BMC.html",
       "name": "限定模型检测学习 - 论文讲解 PPTL BMC.html",
       "size": 1622155,
       "type": "html",
-      "lastModified": "2026-03-31T11:09:16+08:00"
+      "lastModified": "2026-03-31T03:09:25Z"
     },
     {
       "path": "ChatGPT-论文讲解_PPTL_BMC.md",
       "name": "ChatGPT-论文讲解_PPTL_BMC.md",
       "size": 436305,
       "type": "text",
-      "lastModified": "2026-03-31T11:09:16+08:00"
+      "lastModified": "2026-03-31T03:09:25Z"
     },
     {
       "path": "LICENSE",
       "name": "LICENSE",
       "size": 1072,
       "type": "other",
-      "lastModified": "2026-03-31T11:09:16+08:00"
+      "lastModified": "2026-03-31T03:09:25Z"
     },
     {
       "path": "tools/generate-manifest.mjs",
       "name": "generate-manifest.mjs",
       "size": 2969,
       "type": "code",
-      "lastModified": "2026-03-31T11:09:16+08:00"
+      "lastModified": "2026-03-31T03:09:25Z"
     }
   ]
 }
