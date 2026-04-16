@@ -1,61 +1,82 @@
 {
-  "generatedAt": "2026-04-15T23:49:20.366Z",
+  "generatedAt": "2026-04-16T00:52:12.057Z",
   "files": [
     {
       "path": "✅ 限定模型检测学习 - 分支 · 限界模型检测创新点-_[gpt-5-4-thinking] (1).html",
       "name": "✅ 限定模型检测学习 - 分支 · 限界模型检测创新点-_[gpt-5-4-thinking] (1).html",
       "size": 699431,
       "type": "html",
-      "lastModified": "2026-04-15T22:53:49Z"
+      "lastModified": "2026-04-16T08:52:02+08:00"
     },
     {
       "path": "✅ 限定模型检测学习 - FGTCTLC模糊集理论讲解-_[gpt-5-3].html",
       "name": "✅ 限定模型检测学习 - FGTCTLC模糊集理论讲解-_[gpt-5-3].html",
       "size": 4118840,
       "type": "html",
-      "lastModified": "2026-04-15T22:53:49Z"
+      "lastModified": "2026-04-16T08:52:02+08:00"
+    },
+    {
+      "path": "2 FGTCTLC模糊集理论讲解.md",
+      "name": "2 FGTCTLC模糊集理论讲解.md",
+      "size": 6402,
+      "type": "text",
+      "lastModified": "2026-04-16T08:52:02+08:00"
+    },
+    {
+      "path": "3.6.md",
+      "name": "3.6.md",
+      "size": 6352,
+      "type": "text",
+      "lastModified": "2026-04-16T08:52:02+08:00"
     },
     {
       "path": "限定模型检测学习 - 论文讲解 PPTL BMC (1).html",
       "name": "限定模型检测学习 - 论文讲解 PPTL BMC (1).html",
       "size": 1818177,
       "type": "html",
-      "lastModified": "2026-04-15T22:53:49Z"
+      "lastModified": "2026-04-16T08:52:02+08:00"
     },
     {
       "path": "限定模型检测学习 - 论文讲解 PPTL BMC.html",
       "name": "限定模型检测学习 - 论文讲解 PPTL BMC.html",
       "size": 1622155,
       "type": "html",
-      "lastModified": "2026-04-15T22:53:49Z"
+      "lastModified": "2026-04-16T08:52:02+08:00"
     },
     {
       "path": "ChatGPT - ✅ 限定模型检测学习 - FGTCTLC模糊集理论讲解-_[gpt-5-3].md",
       "name": "ChatGPT - ✅ 限定模型检测学习 - FGTCTLC模糊集理论讲解-_[gpt-5-3].md",
       "size": 125800,
       "type": "text",
-      "lastModified": "2026-04-15T22:53:49Z"
+      "lastModified": "2026-04-16T08:52:02+08:00"
     },
     {
       "path": "ChatGPT-论文讲解_PPTL_BMC.md",
       "name": "ChatGPT-论文讲解_PPTL_BMC.md",
       "size": 436305,
       "type": "text",
-      "lastModified": "2026-04-15T22:53:49Z"
+      "lastModified": "2026-04-16T08:52:02+08:00"
     },
     {
       "path": "LICENSE",
       "name": "LICENSE",
       "size": 1072,
       "type": "other",
-      "lastModified": "2026-04-15T22:53:49Z"
+      "lastModified": "2026-04-16T08:52:02+08:00"
     },
     {
       "path": "tools/generate-manifest.mjs",
       "name": "generate-manifest.mjs",
       "size": 2969,
       "type": "code",
-      "lastModified": "2026-04-15T22:53:49Z"
+      "lastModified": "2026-04-16T08:52:02+08:00"
+    },
+    {
+      "path": "zadeh模糊计算.md",
+      "name": "zadeh模糊计算.md",
+      "size": 3120,
+      "type": "text",
+      "lastModified": "2026-04-16T08:52:02+08:00"
     }
   ]
 }
