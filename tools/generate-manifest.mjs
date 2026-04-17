@@ -40,9 +40,17 @@ function safeGit(args) {
   }
 }
 
+/**
+ * 关键修复：
+ * 使用 core.quotepath=false，避免 git ls-files 对中文路径输出带引号和八进制转义。
+ * 否则在 GitHub Actions 上会出现：
+ * "2 FGTCTLC\346\250\241....md"
+ * 这种字符串，fs.statSync 无法找到真实文件。
+ */
 function getTrackedFiles() {
-  const output = safeGit(["ls-files"]);
+  const output = safeGit(["-c", "core.quotepath=false", "ls-files"]);
   if (!output) return [];
+
   return output
     .split(/\r?\n/)
     .map((s) => s.trim())
@@ -62,12 +70,14 @@ function getExtension(relPath) {
 
 function getFileType(relPath) {
   const ext = getExtension(relPath);
+
   if (["html", "htm"].includes(ext)) return "html";
   if (["pdf"].includes(ext)) return "pdf";
   if (["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp", "ico", "avif"].includes(ext)) return "image";
   if (["md", "txt", "json", "csv", "xml", "yml", "yaml"].includes(ext)) return "text";
-  if (["js", "ts", "jsx", "tsx", "py", "java", "c", "cpp", "h", "hpp", "cs", "go", "rs", "php", "rb", "sh", "bat", "ps1", "css", "scss", "sql"].includes(ext)) return "code";
+  if (["js", "mjs", "cjs", "ts", "jsx", "tsx", "py", "java", "c", "cpp", "h", "hpp", "cs", "go", "rs", "php", "rb", "sh", "bat", "ps1", "css", "scss", "sql"].includes(ext)) return "code";
   if (["zip", "rar", "7z", "tar", "gz"].includes(ext)) return "archive";
+
   return "other";
 }
 
@@ -85,15 +95,27 @@ function getLatestCommit() {
   return safeGit(["rev-parse", "HEAD"]) || "";
 }
 
+function normalizeRelPath(relPath) {
+  return String(relPath || "").replace(/\\/g, "/");
+}
+
 function generateManifestData() {
-  const files = getTrackedFiles()
+  const trackedFiles = getTrackedFiles();
+
+  const files = trackedFiles
     .filter((relPath) => !shouldExclude(relPath))
     .map((relPath) => {
+      const normalizedPath = normalizeRelPath(relPath);
       const absPath = path.join(repoRoot, relPath);
+
+      if (!fs.existsSync(absPath)) {
+        throw new Error(`File not found during manifest generation: ${normalizedPath}`);
+      }
+
       const stat = fs.statSync(absPath);
 
       return {
-        path: relPath.replace(/\\/g, "/"),
+        path: normalizedPath,
         name: path.basename(relPath),
         size: stat.size,
         type: getFileType(relPath),
@@ -132,10 +154,16 @@ function writeJson(filePath, data) {
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2) + "\n", "utf8");
 }
 
-const { manifest, version } = generateManifestData();
+try {
+  const { manifest, version } = generateManifestData();
 
-writeJson(manifestFile, manifest);
-writeJson(versionFile, version);
+  writeJson(manifestFile, manifest);
+  writeJson(versionFile, version);
 
-console.log(`manifest.json generated with ${manifest.files.length} files.`);
-console.log(`version.json generated at ${version.generatedAt}.`);
+  console.log(`manifest.json generated with ${manifest.files.length} files.`);
+  console.log(`version.json generated at ${version.generatedAt}.`);
+} catch (error) {
+  console.error("Failed to generate manifest/version:");
+  console.error(error);
+  process.exit(1);
+}
