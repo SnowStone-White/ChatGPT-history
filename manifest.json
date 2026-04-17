@@ -1,103 +1,129 @@
 {
-  "generatedAt": "2026-04-17T01:48:23.907Z",
+  "owner": "SnowStone-White",
+  "repo": "ChatGPT-history",
+  "branch": "main",
+  "generatedAt": "2026-04-17T02:33:46.549Z",
+  "latestCommit": "a200b581593369aea8131ecdc833fa18a97ba4cc",
   "files": [
+    {
+      "path": ".github/workflows/update-manifest.yml",
+      "name": "update-manifest.yml",
+      "size": 934,
+      "type": "text",
+      "lastModified": "2026-04-17T10:01:00+08:00",
+      "sha": "64ae2c14ebbbdd5bee3504a871b0440ec3a3dec7"
+    },
     {
       "path": "✅ 限定模型检测学习 - 2 FGTCTLC模糊集理论讲解-_[gpt-5-4-thinking].html",
       "name": "✅ 限定模型检测学习 - 2 FGTCTLC模糊集理论讲解-_[gpt-5-4-thinking].html",
       "size": 5405660,
       "type": "html",
-      "lastModified": "2026-04-17T09:48:14+08:00"
+      "lastModified": "2026-04-16T09:28:32+08:00",
+      "sha": "0fee7f5292c62f3d150ce7bab967c9cacf3d5a94"
     },
     {
       "path": "✅ 限定模型检测学习 - 分支 · 公式3.7 FGTCTLC模糊集理论讲解-_[gpt-5-4-thinking].html",
       "name": "✅ 限定模型检测学习 - 分支 · 公式3.7 FGTCTLC模糊集理论讲解-_[gpt-5-4-thinking].html",
       "size": 2851261,
       "type": "html",
-      "lastModified": "2026-04-17T09:48:14+08:00"
+      "lastModified": "2026-04-16T09:30:20+08:00",
+      "sha": "e1df4c928bd6b29b9fd81c11833c3e5f8d32b543"
     },
     {
       "path": "✅ 限定模型检测学习 - 分支 · 限界模型检测创新点-_[gpt-5-4-thinking] (1).html",
       "name": "✅ 限定模型检测学习 - 分支 · 限界模型检测创新点-_[gpt-5-4-thinking] (1).html",
       "size": 699431,
       "type": "html",
-      "lastModified": "2026-04-17T09:48:14+08:00"
+      "lastModified": "2026-03-31T15:29:03+08:00",
+      "sha": "49c8d331108df80f67b416d0c10097d76f8bcb97"
     },
     {
       "path": "✅ 限定模型检测学习 - FGTCTLC模糊集理论讲解-_[gpt-5-3].html",
       "name": "✅ 限定模型检测学习 - FGTCTLC模糊集理论讲解-_[gpt-5-3].html",
       "size": 4118840,
       "type": "html",
-      "lastModified": "2026-04-17T09:48:14+08:00"
+      "lastModified": "2026-04-14T20:20:29+08:00",
+      "sha": "7505351b9186f61dd4906309882f670575f2ccdc"
     },
     {
       "path": "2 FGTCTLC模糊集理论讲解.md",
       "name": "2 FGTCTLC模糊集理论讲解.md",
       "size": 6402,
       "type": "text",
-      "lastModified": "2026-04-17T09:48:14+08:00"
+      "lastModified": "2026-04-16T08:52:02+08:00",
+      "sha": "f63a2d810d998fafa269d3ad5f8b5b78c965ef1f"
     },
     {
       "path": "3.6.md",
       "name": "3.6.md",
       "size": 6352,
       "type": "text",
-      "lastModified": "2026-04-17T09:48:14+08:00"
+      "lastModified": "2026-04-16T08:52:02+08:00",
+      "sha": "f63a2d810d998fafa269d3ad5f8b5b78c965ef1f"
     },
     {
       "path": "限定模型检测学习 - 论文讲解 PPTL BMC (1).html",
       "name": "限定模型检测学习 - 论文讲解 PPTL BMC (1).html",
       "size": 1818177,
       "type": "html",
-      "lastModified": "2026-04-17T09:48:14+08:00"
+      "lastModified": "2026-03-24T19:17:49+08:00",
+      "sha": "14b62626097b204ab366ab0aac04823ba56f9739"
     },
     {
       "path": "限定模型检测学习 - 论文讲解 PPTL BMC.html",
       "name": "限定模型检测学习 - 论文讲解 PPTL BMC.html",
       "size": 1622155,
       "type": "html",
-      "lastModified": "2026-04-17T09:48:14+08:00"
+      "lastModified": "2026-03-24T19:17:49+08:00",
+      "sha": "14b62626097b204ab366ab0aac04823ba56f9739"
     },
     {
       "path": "ChatGPT - ✅ 限定模型检测学习 - FGTCTLC模糊集理论讲解-_[gpt-5-3].md",
       "name": "ChatGPT - ✅ 限定模型检测学习 - FGTCTLC模糊集理论讲解-_[gpt-5-3].md",
       "size": 125800,
       "type": "text",
-      "lastModified": "2026-04-17T09:48:14+08:00"
+      "lastModified": "2026-04-14T20:20:29+08:00",
+      "sha": "7505351b9186f61dd4906309882f670575f2ccdc"
     },
     {
       "path": "ChatGPT-2_FGTCTLC模糊集理论讲解.md",
       "name": "ChatGPT-2_FGTCTLC模糊集理论讲解.md",
       "size": 2372342,
       "type": "text",
-      "lastModified": "2026-04-17T09:48:14+08:00"
+      "lastModified": "2026-04-16T09:28:32+08:00",
+      "sha": "0fee7f5292c62f3d150ce7bab967c9cacf3d5a94"
     },
     {
       "path": "ChatGPT-论文讲解_PPTL_BMC.md",
       "name": "ChatGPT-论文讲解_PPTL_BMC.md",
       "size": 436305,
       "type": "text",
-      "lastModified": "2026-04-17T09:48:14+08:00"
+      "lastModified": "2026-03-24T19:17:49+08:00",
+      "sha": "14b62626097b204ab366ab0aac04823ba56f9739"
     },
     {
       "path": "LICENSE",
       "name": "LICENSE",
       "size": 1072,
       "type": "other",
-      "lastModified": "2026-04-17T09:48:14+08:00"
+      "lastModified": "2026-03-24T19:16:59+08:00",
+      "sha": "cb38f0eccf272d3ed83777a154606c4aa15448d3"
     },
     {
       "path": "tools/generate-manifest.mjs",
       "name": "generate-manifest.mjs",
-      "size": 2969,
+      "size": 4447,
       "type": "code",
-      "lastModified": "2026-04-17T09:48:14+08:00"
+      "lastModified": "2026-04-17T10:33:33+08:00",
+      "sha": "a200b581593369aea8131ecdc833fa18a97ba4cc"
     },
     {
       "path": "zadeh模糊计算.md",
       "name": "zadeh模糊计算.md",
       "size": 3120,
       "type": "text",
-      "lastModified": "2026-04-17T09:48:14+08:00"
+      "lastModified": "2026-04-16T08:52:02+08:00",
+      "sha": "f63a2d810d998fafa269d3ad5f8b5b78c965ef1f"
     }
   ]
 }
