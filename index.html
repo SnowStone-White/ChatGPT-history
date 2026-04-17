@@ -13,8 +13,7 @@
         <div>
           <h1>仓库文件索引</h1>
           <p class="desc">
-            页面读取仓库内的 manifest.json，并支持按类型、按一级文件夹、按目录树浏览；
-            同时后台静默检查 version.json，在有新版本时提醒更新。
+            页面优先按文件目录浏览，并保留按文件类型分组的总览视图。
           </p>
         </div>
 
@@ -43,19 +42,11 @@
     <div class="card">
       <div class="toolbar">
         <input id="searchInput" type="text" placeholder="搜索文件名、路径、扩展名..." />
-
-        <select id="groupModeSelect">
-          <option value="type">按类型分组</option>
-          <option value="folder">按一级文件夹分组</option>
-          <option value="tree">按目录树浏览</option>
-        </select>
-
         <select id="sortSelect">
           <option value="name-asc">按名字排序（A → Z）</option>
           <option value="time-desc">按时间排序（新 → 旧）</option>
           <option value="time-asc">按时间排序（旧 → 新）</option>
         </select>
-
         <select id="typeFilter">
           <option value="all">全部类型</option>
           <option value="html">HTML</option>
@@ -66,7 +57,6 @@
           <option value="archive">压缩包</option>
           <option value="other">其他</option>
         </select>
-
         <button id="refreshBtn" type="button">刷新缓存</button>
       </div>
 
@@ -77,7 +67,6 @@
         <div>缓存：<strong id="cacheInfo">未命中</strong></div>
         <div>更新时间：<strong id="updateInfo">-</strong></div>
         <div>当前版本：<strong id="versionInfo">-</strong></div>
-        <div>浏览模式：<strong id="groupModeInfo">按类型分组</strong></div>
       </div>
 
       <div class="rate-card">
@@ -118,13 +107,34 @@
         </div>
       </div>
 
-      <div id="contentArea">
-        <div id="status" class="empty">正在读取仓库文件…</div>
-      </div>
+      <!-- 目录浏览模块：优先显示 -->
+      <section class="dir-section">
+        <div class="section-header">
+          <h2>🗂️ 文件目录浏览</h2>
+          <div class="section-actions">
+            <button id="goRootBtn" type="button" class="mini-btn">返回根目录</button>
+            <button id="goParentBtn" type="button" class="mini-btn">返回上级</button>
+          </div>
+        </div>
+
+        <div id="breadcrumbBar" class="breadcrumb-bar"></div>
+        <div id="directoryArea">
+          <div class="empty">正在读取目录…</div>
+        </div>
+      </section>
+
+      <!-- 类型浏览模块：保留原功能，放在下面 -->
+      <section class="type-section">
+        <div class="section-header">
+          <h2>📚 按文件类别查看</h2>
+        </div>
+        <div id="contentArea">
+          <div id="status" class="empty">正在读取仓库文件…</div>
+        </div>
+      </section>
 
       <div class="footer-tip">
-        提示：manifest.json 与 version.json 建议由 GitHub Actions 在 push 后自动生成。
-        页面优先使用本地缓存，并后台静默检查新版本。
+        提示：页面优先显示目录浏览，下面保留按类型分组的总览。
       </div>
     </div>
   </div>

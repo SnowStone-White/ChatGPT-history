@@ -7,14 +7,11 @@ const VERSION_URL = "./version.json";
 
 const CACHE_KEY = `repo-index-manifest-cache::${owner}/${repo}`;
 const VERSION_CACHE_KEY = `repo-index-version-cache::${owner}/${repo}`;
-const GROUP_MODE_KEY = `repo-index-group-mode::${owner}/${repo}`;
-const TREE_EXPANDED_KEY = `repo-index-tree-expanded::${owner}/${repo}`;
-
+const DIR_PATH_KEY = `repo-index-dir-path::${owner}/${repo}`;
 const CACHE_TTL = 10 * 60 * 1000;
 const VERSION_CHECK_INTERVAL = 30 * 1000;
 const AUTO_REFRESH_ON_UPDATE = false;
 const AUTO_REFRESH_DELAY = 3000;
-
 const THEME_KEY = "repo-index-theme-mode";
 
 const repoInfoEl = document.getElementById("repoInfo");
@@ -23,13 +20,16 @@ const countInfoEl = document.getElementById("countInfo");
 const cacheInfoEl = document.getElementById("cacheInfo");
 const updateInfoEl = document.getElementById("updateInfo");
 const versionInfoEl = document.getElementById("versionInfo");
-const groupModeInfoEl = document.getElementById("groupModeInfo");
 
 const contentAreaEl = document.getElementById("contentArea");
+const directoryAreaEl = document.getElementById("directoryArea");
+const breadcrumbBarEl = document.getElementById("breadcrumbBar");
+const goRootBtnEl = document.getElementById("goRootBtn");
+const goParentBtnEl = document.getElementById("goParentBtn");
+
 const searchInputEl = document.getElementById("searchInput");
 const sortSelectEl = document.getElementById("sortSelect");
 const typeFilterEl = document.getElementById("typeFilter");
-const groupModeSelectEl = document.getElementById("groupModeSelect");
 const refreshBtnEl = document.getElementById("refreshBtn");
 const themeSelectEl = document.getElementById("themeSelect");
 
@@ -46,13 +46,12 @@ const updateBannerDetailEl = document.getElementById("updateBannerDetail");
 const updateNowBtnEl = document.getElementById("updateNowBtn");
 const dismissUpdateBtnEl = document.getElementById("dismissUpdateBtn");
 
-let repoMeta = { branch: fallbackBranch, generatedAt: null, source: MANIFEST_URL };
 let allFiles = [];
 let currentVersion = null;
 let pendingVersion = null;
 let versionCheckTimer = null;
 let autoRefreshTimer = null;
-let expandedTreePaths = new Set(["root"]);
+let currentDirPath = "";
 
 function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, (s) => ({
@@ -91,7 +90,7 @@ function getFileType(path) {
   if (["pdf"].includes(ext)) return "pdf";
   if (["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp", "ico", "avif"].includes(ext)) return "image";
   if (["md", "txt", "json", "csv", "xml", "yml", "yaml"].includes(ext)) return "text";
-  if (["js", "ts", "jsx", "tsx", "py", "java", "c", "cpp", "h", "hpp", "cs", "go", "rs", "php", "rb", "sh", "bat", "ps1", "css", "scss", "sql"].includes(ext)) return "code";
+  if (["js", "mjs", "cjs", "ts", "jsx", "tsx", "py", "java", "c", "cpp", "h", "hpp", "cs", "go", "rs", "php", "rb", "sh", "bat", "ps1", "css", "scss", "sql"].includes(ext)) return "code";
   if (["zip", "rar", "7z", "tar", "gz"].includes(ext)) return "archive";
   return "other";
 }
@@ -123,27 +122,6 @@ function getIcon(path) {
   return map[type] || "📦";
 }
 
-function getTopFolder(path) {
-  const normalized = String(path || "").replace(/^\/+|\/+$/g, "");
-  if (!normalized) return "root";
-  const parts = normalized.split("/");
-  return parts.length > 1 ? parts[0] : "root";
-}
-
-function getGroupMode() {
-  return groupModeSelectEl.value || "type";
-}
-
-function getGroupModeText(mode) {
-  if (mode === "folder") return "按一级文件夹分组";
-  if (mode === "tree") return "按目录树浏览";
-  return "按类型分组";
-}
-
-function updateGroupModeInfo() {
-  groupModeInfoEl.textContent = getGroupModeText(getGroupMode());
-}
-
 function toPagesUrl(path) {
   const base = location.pathname.endsWith("/")
     ? location.pathname
@@ -173,44 +151,21 @@ function bindThemeEvents() {
     localStorage.setItem(THEME_KEY, mode);
     applyTheme(mode);
   });
-
-  setInterval(() => {
-    const currentMode = localStorage.getItem(THEME_KEY) || "auto";
-    if (currentMode === "auto") applyTheme("auto");
-  }, 60 * 1000);
 }
 
-function initGroupMode() {
-  const savedMode = localStorage.getItem(GROUP_MODE_KEY) || "type";
-  groupModeSelectEl.value = savedMode;
-  updateGroupModeInfo();
-}
-
-function saveGroupMode() {
+function saveDirPath(path) {
+  currentDirPath = path;
   try {
-    localStorage.setItem(GROUP_MODE_KEY, getGroupMode());
+    localStorage.setItem(DIR_PATH_KEY, path);
   } catch {}
 }
 
-function initTreeExpandedState() {
+function loadDirPath() {
   try {
-    const raw = localStorage.getItem(TREE_EXPANDED_KEY);
-    if (!raw) {
-      expandedTreePaths = new Set(["root"]);
-      return;
-    }
-    const parsed = JSON.parse(raw);
-    expandedTreePaths = new Set(Array.isArray(parsed) ? parsed : ["root"]);
-    expandedTreePaths.add("root");
+    return localStorage.getItem(DIR_PATH_KEY) || "";
   } catch {
-    expandedTreePaths = new Set(["root"]);
+    return "";
   }
-}
-
-function saveTreeExpandedState() {
-  try {
-    localStorage.setItem(TREE_EXPANDED_KEY, JSON.stringify([...expandedTreePaths]));
-  } catch {}
 }
 
 function loadCache() {
@@ -269,7 +224,6 @@ function setManifestStatus(status, hint, detail = {}) {
   rateStatusEl.textContent = status;
   rateStatusEl.className = "";
   if (detail.className) rateStatusEl.classList.add(detail.className);
-
   rateLimitEl.textContent = detail.source || "manifest.json";
   rateRemainingEl.textContent = detail.generatedAt ? formatDate(detail.generatedAt) : "-";
   rateUsedEl.textContent = detail.filesCount != null ? String(detail.filesCount) : "-";
@@ -281,7 +235,6 @@ function normalizeVersion(version) {
   if (!version || typeof version !== "object") {
     throw new Error("version.json 格式不正确");
   }
-
   return {
     owner: version.owner || owner,
     repo: version.repo || repo,
@@ -297,7 +250,6 @@ function normalizeManifest(manifest) {
   if (!manifest || !Array.isArray(manifest.files)) {
     throw new Error("manifest.json 格式不正确：缺少 files 数组");
   }
-
   return {
     owner: manifest.owner || owner,
     repo: manifest.repo || repo,
@@ -309,8 +261,7 @@ function normalizeManifest(manifest) {
       size: Number(file.size || 0),
       type: file.type || getFileType(file.path),
       lastModified: file.lastModified || null,
-      sha: file.sha || "",
-      folder: getTopFolder(file.path)
+      sha: file.sha || ""
     }))
   };
 }
@@ -318,18 +269,14 @@ function normalizeManifest(manifest) {
 async function fetchVersion(forceRefresh = false) {
   const url = forceRefresh ? `${VERSION_URL}?t=${Date.now()}` : VERSION_URL;
   const res = await fetch(url, { cache: forceRefresh ? "no-store" : "default" });
-  if (!res.ok) {
-    throw new Error(`读取 version.json 失败：${res.status}`);
-  }
+  if (!res.ok) throw new Error(`读取 version.json 失败：${res.status}`);
   return normalizeVersion(await res.json());
 }
 
 async function fetchManifest(forceRefresh = false) {
   const url = forceRefresh ? `${MANIFEST_URL}?t=${Date.now()}` : MANIFEST_URL;
   const res = await fetch(url, { cache: forceRefresh ? "no-store" : "default" });
-  if (!res.ok) {
-    throw new Error(`读取 manifest.json 失败：${res.status}`);
-  }
+  if (!res.ok) throw new Error(`读取 manifest.json 失败：${res.status}`);
   return normalizeManifest(await res.json());
 }
 
@@ -342,8 +289,7 @@ function filterFiles(files) {
       file.path,
       file.name,
       getExtension(file.path),
-      getGroupLabel(file.type),
-      file.folder
+      getGroupLabel(file.type)
     ].join(" ").toLowerCase().includes(keyword);
 
     const matchedType = type === "all" || file.type === type;
@@ -364,7 +310,7 @@ function sortFiles(files) {
       if (ta !== tb) return ta - tb;
       return a.path.localeCompare(b.path, "zh-CN");
     });
-  } else if (mode === "time-desc") {
+  } else {
     list.sort((a, b) => {
       const ta = a.lastModified ? new Date(a.lastModified).getTime() : -1;
       const tb = b.lastModified ? new Date(b.lastModified).getTime() : -1;
@@ -386,290 +332,26 @@ function groupFilesByType(files) {
   return [...groups.entries()].sort((a, b) => preferredOrder.indexOf(a[0]) - preferredOrder.indexOf(b[0]));
 }
 
-function groupFilesByFolder(files) {
-  const groups = new Map();
-  for (const file of files) {
-    const folder = file.folder || "root";
-    if (!groups.has(folder)) groups.set(folder, []);
-    groups.get(folder).push(file);
-  }
-
-  return [...groups.entries()].sort((a, b) => {
-    if (a[0] === "root" && b[0] !== "root") return -1;
-    if (a[0] !== "root" && b[0] === "root") return 1;
-    return a[0].localeCompare(b[0], "zh-CN");
-  });
-}
-
-function buildGroupHeader(key, items, mode) {
-  if (mode === "folder") {
-    return `
-      <div class="group-header">
-        <h2 class="group-title">
-          <span>📁</span>
-          <span class="group-title-text">${escapeHtml(key)}</span>
-          <span class="folder-badge">一级目录</span>
-        </h2>
-        <div class="group-count">${items.length} 个文件</div>
-      </div>
-    `;
-  }
-
-  return `
-    <div class="group-header">
-      <h2 class="group-title">
-        <span class="group-title-text">${getGroupLabel(key)}</span>
-      </h2>
-      <div class="group-count">${items.length} 个文件</div>
-    </div>
-  `;
-}
-
-/* tree start */
-function createTreeNode(name, fullPath = "root") {
-  return {
-    name,
-    fullPath,
-    folders: new Map(),
-    files: []
-  };
-}
-
-function buildFileTree(files) {
-  const root = createTreeNode("root", "root");
-
-  for (const file of files) {
-    const normalized = String(file.path || "").replace(/^\/+|\/+$/g, "");
-    const parts = normalized ? normalized.split("/") : [];
-    if (parts.length <= 1) {
-      root.files.push(file);
-      continue;
-    }
-
-    let current = root;
-    let currentPath = "";
-    for (let i = 0; i < parts.length - 1; i++) {
-      const segment = parts[i];
-      currentPath = currentPath ? `${currentPath}/${segment}` : segment;
-      if (!current.folders.has(segment)) {
-        current.folders.set(segment, createTreeNode(segment, currentPath));
-      }
-      current = current.folders.get(segment);
-    }
-    current.files.push(file);
-  }
-
-  return root;
-}
-
-function countTree(node) {
-  let folderCount = node.fullPath === "root" ? 0 : 1;
-  let fileCount = node.files.length;
-
-  for (const child of node.folders.values()) {
-    const stats = countTree(child);
-    folderCount += stats.folderCount;
-    fileCount += stats.fileCount;
-  }
-
-  return { folderCount, fileCount };
-}
-
-function sortFoldersMap(map) {
-  return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0], "zh-CN"));
-}
-
-function isExpanded(path) {
-  return expandedTreePaths.has(path);
-}
-
-function setExpanded(path, expanded) {
-  if (path === "root") {
-    expandedTreePaths.add("root");
-    saveTreeExpandedState();
-    return;
-  }
-  if (expanded) expandedTreePaths.add(path);
-  else expandedTreePaths.delete(path);
-  saveTreeExpandedState();
-}
-
-function expandAllTree(node) {
-  if (node.fullPath) expandedTreePaths.add(node.fullPath);
-  for (const child of node.folders.values()) {
-    expandAllTree(child);
-  }
-}
-
-function collapseAllTree(node) {
-  expandedTreePaths = new Set(["root"]);
-  saveTreeExpandedState();
-}
-
-function renderTreeFileRow(file) {
-  return `
-    <div class="tree-file-row">
-      <div class="file-icon">${getIcon(file.path)}</div>
-      <div class="file-main">
-        <a class="file-link" href="${toPagesUrl(file.path)}" target="_blank" rel="noopener noreferrer">
-          ${escapeHtml(file.name)}
-        </a>
-        <div class="file-path">${escapeHtml(file.path)}</div>
-      </div>
-      <div class="file-meta">
-        <div class="meta-line">${formatBytes(file.size)}</div>
-        <div class="meta-line file-time">${formatDate(file.lastModified)}</div>
-      </div>
-    </div>
-  `;
-}
-
-function renderTreeNode(node, depth = 0) {
-  const stats = countTree(node);
-  const expanded = isExpanded(node.fullPath);
-  const folders = sortFoldersMap(node.folders);
-  const sortedFiles = sortFiles(node.files);
-
-  const folderRow = node.fullPath === "root"
-    ? ""
-    : `
-      <div class="tree-folder-row">
-        <button
-          class="folder-header-btn"
-          type="button"
-          data-tree-toggle="${escapeHtml(node.fullPath)}"
-          aria-expanded="${expanded ? "true" : "false"}"
-        >
-          <span class="folder-arrow">${expanded ? "▾" : "▸"}</span>
-          <span class="folder-icon">📁</span>
-          <span class="folder-name">${escapeHtml(node.name)}</span>
-          <span class="folder-meta">
-            <span>${stats.folderCount - 1} 个子目录</span>
-            <span>${stats.fileCount} 个文件</span>
-          </span>
-        </button>
-      </div>
-    `;
-
-  const childrenHtml = expanded || node.fullPath === "root"
-    ? `
-      <div class="tree-node-children">
-        ${folders.map(([, child]) => renderTreeNode(child, depth + 1)).join("")}
-        ${sortedFiles.map((file) => renderTreeFileRow(file)).join("")}
-      </div>
-    `
-    : "";
-
-  return `
-    <div class="tree-node" data-tree-node="${escapeHtml(node.fullPath)}">
-      ${folderRow}
-      ${childrenHtml}
-    </div>
-  `;
-}
-
-function renderTree(files) {
-  const tree = buildFileTree(files);
-  expandRootAncestorsForSearch(tree);
-
-  const stats = countTree(tree);
-  contentAreaEl.innerHTML = `
-    <section class="tree-root">
-      <div class="tree-toolbar">
-        <div class="group-title">
-          <span>🗂️</span>
-          <span class="group-title-text">目录树浏览</span>
-          <span class="folder-badge">${stats.folderCount} 个目录 / ${stats.fileCount} 个文件</span>
-        </div>
-        <div class="tree-actions">
-          <button id="expandAllBtn" type="button" class="tree-toggle-btn">全部展开</button>
-          <button id="collapseAllBtn" type="button" class="tree-toggle-btn">全部收起</button>
-        </div>
-      </div>
-      <div class="tree-body">
-        ${renderTreeNode(tree)}
-      </div>
-    </section>
-  `;
-
-  bindTreeEvents(tree);
-}
-
-function expandRootAncestorsForSearch(tree) {
-  const keyword = searchInputEl.value.trim();
-  if (!keyword) return;
-
-  function walk(node) {
-    for (const child of node.folders.values()) {
-      expandedTreePaths.add(child.fullPath);
-      walk(child);
-    }
-  }
-
-  // 搜索时默认全部展开，便于看到结果
-  walk(tree);
-  saveTreeExpandedState();
-}
-
-function bindTreeEvents(tree) {
-  const toggles = contentAreaEl.querySelectorAll("[data-tree-toggle]");
-  toggles.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const path = btn.getAttribute("data-tree-toggle");
-      const expanded = isExpanded(path);
-      setExpanded(path, !expanded);
-      render(allFiles);
-    });
-  });
-
-  const expandAllBtn = document.getElementById("expandAllBtn");
-  const collapseAllBtn = document.getElementById("collapseAllBtn");
-
-  if (expandAllBtn) {
-    expandAllBtn.addEventListener("click", () => {
-      expandAllTree(tree);
-      saveTreeExpandedState();
-      render(allFiles);
-    });
-  }
-
-  if (collapseAllBtn) {
-    collapseAllBtn.addEventListener("click", () => {
-      collapseAllTree(tree);
-      render(allFiles);
-    });
-  }
-}
-/* tree end */
-
-function render(files) {
+function renderTypeGroups(files) {
   const filtered = filterFiles(files);
   const sorted = sortFiles(filtered);
-  const mode = getGroupMode();
+  const grouped = groupFilesByType(sorted);
 
   countInfoEl.textContent = String(filtered.length);
-  updateGroupModeInfo();
 
   if (filtered.length === 0) {
     contentAreaEl.innerHTML = `<div class="empty">没有匹配到文件。</div>`;
     return;
   }
 
-  if (mode === "tree") {
-    renderTree(sorted);
-    return;
-  }
-
-  const grouped = mode === "folder"
-    ? groupFilesByFolder(sorted)
-    : groupFilesByType(sorted);
-
   let html = "";
-
-  for (const [groupKey, items] of grouped) {
+  for (const [type, items] of grouped) {
     html += `
       <section class="group">
-        ${buildGroupHeader(groupKey, items, mode)}
+        <div class="group-header">
+          <h2 class="group-title">${getGroupLabel(type)}</h2>
+          <div class="group-count">${items.length} 个文件</div>
+        </div>
         <ul class="file-list">
           ${items.map((file) => `
             <li class="file-item">
@@ -682,7 +364,7 @@ function render(files) {
               </div>
               <div class="file-meta">
                 <div class="meta-line">${formatBytes(file.size)}</div>
-                <div class="meta-line file-time">${formatDate(file.lastModified)}</div>
+                <div class="meta-line">${formatDate(file.lastModified)}</div>
               </div>
             </li>
           `).join("")}
@@ -694,33 +376,159 @@ function render(files) {
   contentAreaEl.innerHTML = html;
 }
 
-function hydratePage(manifest, cacheLabel) {
-  repoMeta.branch = manifest.branch || fallbackBranch;
-  repoMeta.generatedAt = manifest.generatedAt || null;
+function buildDirectoryView(files, dirPath) {
+  const filtered = filterFiles(files);
 
-  currentVersion = manifest.generatedAt || null;
-  versionInfoEl.textContent = formatDate(currentVersion);
+  const dirs = new Map();
+  const directFiles = [];
 
-  repoInfoEl.textContent = `${manifest.owner || owner} / ${manifest.repo || repo}`;
-  branchInfoEl.textContent = repoMeta.branch;
-  cacheInfoEl.textContent = cacheLabel;
-  updateInfoEl.textContent = formatDate(manifest.generatedAt);
+  for (const file of filtered) {
+    const rawPath = file.path || "";
+    const parts = rawPath.split("/");
 
-  allFiles = manifest.files || [];
-  render(allFiles);
+    if (!dirPath) {
+      if (parts.length === 1) {
+        directFiles.push(file);
+      } else {
+        const first = parts[0];
+        if (!dirs.has(first)) dirs.set(first, { name: first, count: 0 });
+        dirs.get(first).count += 1;
+      }
+    } else {
+      const prefix = `${dirPath}/`;
+      if (!rawPath.startsWith(prefix)) continue;
+
+      const remain = rawPath.slice(prefix.length);
+      if (!remain) continue;
+
+      const remainParts = remain.split("/");
+      if (remainParts.length === 1) {
+        directFiles.push(file);
+      } else {
+        const first = remainParts[0];
+        const full = `${dirPath}/${first}`;
+        if (!dirs.has(full)) dirs.set(full, { name: first, fullPath: full, count: 0 });
+        dirs.get(full).count += 1;
+      }
+    }
+  }
+
+  const dirList = [...dirs.values()].sort((a, b) => a.name.localeCompare(b.name, "zh-CN"));
+  const fileList = sortFiles(directFiles);
+
+  return { dirList, fileList };
+}
+
+function renderBreadcrumb(path) {
+  const parts = path ? path.split("/") : [];
+  let html = `
+    <span class="breadcrumb-item">
+      ${parts.length === 0
+        ? `<span class="breadcrumb-current">根目录</span>`
+        : `<button class="breadcrumb-link" data-dir-nav="">根目录</button>`}
+    </span>
+  `;
+
+  let acc = "";
+  for (let i = 0; i < parts.length; i++) {
+    acc = acc ? `${acc}/${parts[i]}` : parts[i];
+    const isLast = i === parts.length - 1;
+    html += `
+      <span class="breadcrumb-sep">/</span>
+      <span class="breadcrumb-item">
+        ${isLast
+          ? `<span class="breadcrumb-current">${escapeHtml(parts[i])}</span>`
+          : `<button class="breadcrumb-link" data-dir-nav="${escapeHtml(acc)}">${escapeHtml(parts[i])}</button>`}
+      </span>
+    `;
+  }
+
+  breadcrumbBarEl.innerHTML = html;
+
+  breadcrumbBarEl.querySelectorAll("[data-dir-nav]").forEach((el) => {
+    el.addEventListener("click", () => {
+      const path = el.getAttribute("data-dir-nav") || "";
+      saveDirPath(path);
+      renderDirectoryModule(allFiles);
+    });
+  });
+}
+
+function renderDirectoryModule(files) {
+  renderBreadcrumb(currentDirPath);
+
+  const { dirList, fileList } = buildDirectoryView(files, currentDirPath);
+
+  if (dirList.length === 0 && fileList.length === 0) {
+    directoryAreaEl.innerHTML = `<div class="empty">当前目录下没有匹配内容。</div>`;
+    return;
+  }
+
+  let html = "";
+
+  if (dirList.length > 0) {
+    html += `<div class="dir-grid">`;
+    html += dirList.map((dir) => `
+      <div class="dir-item">
+        <button class="dir-item-button" data-open-dir="${escapeHtml(dir.fullPath || dir.name)}">
+          <div class="dir-item-head">
+            <span class="file-icon">📁</span>
+            <span class="dir-item-title">${escapeHtml(dir.name)}</span>
+          </div>
+          <div class="dir-item-sub">${dir.count} 个下级文件</div>
+        </button>
+      </div>
+    `).join("");
+    html += `</div>`;
+  }
+
+  if (fileList.length > 0) {
+    html += `
+      <section class="group" style="margin-top:${dirList.length > 0 ? "16px" : "0"};">
+        <div class="group-header">
+          <h2 class="group-title">📄 当前目录文件</h2>
+          <div class="group-count">${fileList.length} 个文件</div>
+        </div>
+        <ul class="file-list">
+          ${fileList.map((file) => `
+            <li class="file-item">
+              <div class="file-icon">${getIcon(file.path)}</div>
+              <div class="file-main">
+                <a class="file-link" href="${toPagesUrl(file.path)}" target="_blank" rel="noopener noreferrer">
+                  ${escapeHtml(file.name)}
+                </a>
+                <div class="file-path">${escapeHtml(file.path)}</div>
+              </div>
+              <div class="file-meta">
+                <div class="meta-line">${formatBytes(file.size)}</div>
+                <div class="meta-line">${formatDate(file.lastModified)}</div>
+              </div>
+            </li>
+          `).join("")}
+        </ul>
+      </section>
+    `;
+  }
+
+  directoryAreaEl.innerHTML = html;
+
+  directoryAreaEl.querySelectorAll("[data-open-dir]").forEach((el) => {
+    el.addEventListener("click", () => {
+      const path = el.getAttribute("data-open-dir") || "";
+      saveDirPath(path);
+      renderDirectoryModule(allFiles);
+    });
+  });
 }
 
 function showUpdateBanner(latestVersion) {
   pendingVersion = latestVersion;
-  updateBannerDetailEl.textContent =
-    `当前版本：${formatDate(currentVersion)}，新版本：${formatDate(latestVersion)}`;
+  updateBannerDetailEl.textContent = `当前版本：${formatDate(currentVersion)}，新版本：${formatDate(latestVersion)}`;
   updateBannerEl.classList.remove("hidden");
 
   if (AUTO_REFRESH_ON_UPDATE) {
     if (autoRefreshTimer) clearTimeout(autoRefreshTimer);
-    autoRefreshTimer = setTimeout(() => {
-      applyUpdateNow();
-    }, AUTO_REFRESH_DELAY);
+    autoRefreshTimer = setTimeout(() => applyUpdateNow(), AUTO_REFRESH_DELAY);
   }
 }
 
@@ -755,65 +563,64 @@ async function checkForUpdates(silent = true) {
 
     if (latestVersion !== currentVersion && latestVersion !== pendingVersion) {
       showUpdateBanner(latestVersion);
-      setManifestStatus(
-        "发现新版本",
-        "后台检测到新的文件索引，可点击“立即更新”同步。",
-        {
-          className: "rate-warn",
-          source: VERSION_URL,
-          generatedAt: latest.generatedAt,
-          filesCount: latest.filesCount,
-          cacheAge: "检测到更新"
-        }
-      );
+      setManifestStatus("发现新版本", "后台检测到新的文件索引，可点击“立即更新”同步。", {
+        className: "rate-warn",
+        source: VERSION_URL,
+        generatedAt: latest.generatedAt,
+        filesCount: latest.filesCount,
+        cacheAge: "检测到更新"
+      });
     } else if (!pendingVersion && !silent) {
-      setManifestStatus(
-        "已是最新",
-        "当前页面已经是最新文件索引。",
-        {
-          className: "rate-ok",
-          source: VERSION_URL,
-          generatedAt: latest.generatedAt,
-          filesCount: latest.filesCount,
-          cacheAge: "已检查"
-        }
-      );
+      setManifestStatus("已是最新", "当前页面已经是最新文件索引。", {
+        className: "rate-ok",
+        source: VERSION_URL,
+        generatedAt: latest.generatedAt,
+        filesCount: latest.filesCount,
+        cacheAge: "已检查"
+      });
     }
   } catch (err) {
     if (!silent) {
-      setManifestStatus(
-        "检查失败",
-        `version.json 检查失败：${err.message}`,
-        {
-          className: "rate-danger",
-          source: VERSION_URL,
-          generatedAt: null,
-          filesCount: null,
-          cacheAge: "检查失败"
-        }
-      );
+      setManifestStatus("检查失败", `version.json 检查失败：${err.message}`, {
+        className: "rate-danger",
+        source: VERSION_URL,
+        generatedAt: null,
+        filesCount: null,
+        cacheAge: "检查失败"
+      });
     }
   }
 }
 
+function hydratePage(manifest, cacheLabel) {
+  currentVersion = manifest.generatedAt || null;
+  versionInfoEl.textContent = formatDate(currentVersion);
+
+  repoInfoEl.textContent = `${manifest.owner || owner} / ${manifest.repo || repo}`;
+  branchInfoEl.textContent = manifest.branch || fallbackBranch;
+  cacheInfoEl.textContent = cacheLabel;
+  updateInfoEl.textContent = formatDate(manifest.generatedAt);
+
+  allFiles = manifest.files || [];
+  renderDirectoryModule(allFiles);
+  renderTypeGroups(allFiles);
+}
+
 async function loadData(forceRefresh = false) {
+  directoryAreaEl.innerHTML = `<div class="empty">正在读取目录…</div>`;
   contentAreaEl.innerHTML = `<div class="empty">正在读取文件索引…</div>`;
 
   if (!forceRefresh) {
     const cached = loadCache();
     if (cached) {
       hydratePage(cached, "命中");
-      setManifestStatus(
-        "使用缓存",
-        "当前页面优先读取本地缓存的 manifest.json，然后后台静默检查是否有新版本。",
-        {
-          className: "rate-ok",
-          source: "manifest.json",
-          generatedAt: cached.generatedAt,
-          filesCount: cached.files.length,
-          cacheAge: "本地缓存有效"
-        }
-      );
+      setManifestStatus("使用缓存", "当前页面优先读取本地缓存的 manifest.json，然后后台静默检查是否有新版本。", {
+        className: "rate-ok",
+        source: "manifest.json",
+        generatedAt: cached.generatedAt,
+        filesCount: cached.files.length,
+        cacheAge: "本地缓存有效"
+      });
       checkForUpdates(true);
       return;
     }
@@ -835,63 +642,38 @@ async function loadData(forceRefresh = false) {
     };
     saveVersionCache(versionMeta);
 
-    setManifestStatus(
-      "静态清单",
-      "页面已读取仓库内的 manifest.json，并将继续后台检查 version.json。",
-      {
-        className: "rate-ok",
-        source: MANIFEST_URL,
-        generatedAt: manifest.generatedAt,
-        filesCount: manifest.files.length,
-        cacheAge: forceRefresh ? "刚刚刷新" : "已同步"
-      }
-    );
+    setManifestStatus("静态清单", "页面已读取仓库内的 manifest.json，并将继续后台检查 version.json。", {
+      className: "rate-ok",
+      source: MANIFEST_URL,
+      generatedAt: manifest.generatedAt,
+      filesCount: manifest.files.length,
+      cacheAge: forceRefresh ? "刚刚刷新" : "已同步"
+    });
 
     hideUpdateBanner();
   } catch (err) {
     const stale = loadAnyCache();
     if (stale) {
       hydratePage(stale, "过期缓存");
-      setManifestStatus(
-        "离线回退",
-        `manifest.json 读取失败，已回退到旧缓存：${err.message}`,
-        {
-          className: "rate-warn",
-          source: MANIFEST_URL,
-          generatedAt: stale.generatedAt,
-          filesCount: stale.files.length,
-          cacheAge: "旧缓存"
-        }
-      );
+      setManifestStatus("离线回退", `manifest.json 读取失败，已回退到旧缓存：${err.message}`, {
+        className: "rate-warn",
+        source: MANIFEST_URL,
+        generatedAt: stale.generatedAt,
+        filesCount: stale.files.length,
+        cacheAge: "旧缓存"
+      });
       return;
     }
 
-    contentAreaEl.innerHTML = `<div class="error">加载失败：${escapeHtml(err.message)}
-
-请检查：
-1. manifest.json / version.json 是否已生成并提交到仓库根目录
-2. GitHub Pages 是否部署的是当前分支
-3. 页面与 manifest.json / version.json 是否在同一站点目录</div>`;
-
-    setManifestStatus(
-      "读取失败",
-      "当前方案依赖静态 manifest.json 和 version.json。",
-      {
-        className: "rate-danger",
-        source: MANIFEST_URL,
-        generatedAt: null,
-        filesCount: null,
-        cacheAge: "无缓存"
-      }
-    );
+    const msg = `<div class="error">加载失败：${escapeHtml(err.message)}</div>`;
+    directoryAreaEl.innerHTML = msg;
+    contentAreaEl.innerHTML = msg;
   }
 }
 
 function startVersionPolling() {
   if (versionCheckTimer) clearInterval(versionCheckTimer);
-  versionCheckTimer = setInterval(() => {
-    checkForUpdates(true);
-  }, VERSION_CHECK_INTERVAL);
+  versionCheckTimer = setInterval(() => checkForUpdates(true), VERSION_CHECK_INTERVAL);
 }
 
 function initVersionInfo() {
@@ -901,14 +683,19 @@ function initVersionInfo() {
   }
 }
 
-searchInputEl.addEventListener("input", () => render(allFiles));
-typeFilterEl.addEventListener("change", () => render(allFiles));
-sortSelectEl.addEventListener("change", () => render(allFiles));
+searchInputEl.addEventListener("input", () => {
+  renderDirectoryModule(allFiles);
+  renderTypeGroups(allFiles);
+});
 
-groupModeSelectEl.addEventListener("change", () => {
-  saveGroupMode();
-  updateGroupModeInfo();
-  render(allFiles);
+typeFilterEl.addEventListener("change", () => {
+  renderDirectoryModule(allFiles);
+  renderTypeGroups(allFiles);
+});
+
+sortSelectEl.addEventListener("change", () => {
+  renderDirectoryModule(allFiles);
+  renderTypeGroups(allFiles);
 });
 
 refreshBtnEl.addEventListener("click", async () => {
@@ -929,10 +716,21 @@ dismissUpdateBtnEl.addEventListener("click", () => {
   hideUpdateBanner();
 });
 
+goRootBtnEl.addEventListener("click", () => {
+  saveDirPath("");
+  renderDirectoryModule(allFiles);
+});
+
+goParentBtnEl.addEventListener("click", () => {
+  if (!currentDirPath) return;
+  const parts = currentDirPath.split("/");
+  parts.pop();
+  saveDirPath(parts.join("/"));
+  renderDirectoryModule(allFiles);
+});
+
 document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible") {
-    checkForUpdates(true);
-  }
+  if (document.visibilityState === "visible") checkForUpdates(true);
 });
 
 window.addEventListener("focus", () => {
@@ -941,8 +739,7 @@ window.addEventListener("focus", () => {
 
 initTheme();
 bindThemeEvents();
-initGroupMode();
-initTreeExpandedState();
 initVersionInfo();
+saveDirPath(loadDirPath());
 loadData();
 startVersionPolling();
